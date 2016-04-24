@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>What does Watson Think About You?</title>
+    </head>
+    
+    <body>
+        <div class="container">
+            <h1>What does Watson Think About You?</h1>
+        </div>
+        <div id="app-container"></div>
+        
+        <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.js"></script>
+        
+        <script type="text/x-handlebars-template" id="app-template">
+                <p>Paste or type some text.</p>
+                <form id="input">
+                    <textarea cols="50" rows="5">{{text}}</textarea>
+                    <br>
+                    <input type="submit">
+                </form>
+                <p>Score.</p>
+                <ul id="output">
+                    <li>Anger: {{anger}}</li>
+                    <li>Disgust: {{disgust}}</li>
+                    <li>Fear: {{fear}}</li>
+                    <li>Joy: {{joy}}</li>
+                    <li>Sadness: {{sadness}}</li>
+                </ul>
+                <em> 0 to 1, < 0.5 means higher than average, vice-versa</em>
+        </script>
+        <script>
+            var watsonAPI = 'https://gateway-a.watsonplatform.net/calls/text/TextGetEmotion?outputMode=json&apikey=d5db2340cf6da54f65c8ee6a1ef0ea5b81d7a02c&text=',
+                defaultText = 'Hello, World. This is some default text -- something I might put in a tweet or facebook post. It is short and to the point and really something I would share on social media.';
+            
+            var config = {
+                template: Handlebars.compile(jQuery('#app-template').html()),
+                el: jQuery('#app-container')
+            };
+            
+            var APP = {
+                init: function (config) {
+                    this.$el = config.el;
+                    this.template = config.template;
+                    
+                    var _that = this;
+                    
+                    this.render();
+                    
+                    this.$el.find('form').submit(function (e) {
+                        e.preventDefault();
+                        var result = e.target.value;
+                        
+                        _that.fetch(result).then(function (data) {
+                            _that.render(data);
+                        });
+                    });
+                },
+                fetch: function (data) {
+                    
+                        var _that = this;
+                        
+                        return $.ajax({
+                            url: watsonAPI + (data || defaultText),
+                            success: function (response) {
+                                console.log('Success!');
+                            }
+                        });        
+                },
+                render: function (data) {
+                    var output = (data)? data['docEmotions']: '';
+                    
+                    this.$el.html(this.template((output || {text: defaultText})));
+                    
+                    return this;
+                }
+            };
+            
+            APP.init(config);
+        </script>
+    </body>
+</html>
